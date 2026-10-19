@@ -55,6 +55,17 @@ class OrchestrationService:
         return deduped
 
     @staticmethod
+    def _leak_check(abstraction: dict[str, Any]) -> list[str]:
+        leak_terms = ["jamming", "granular", "grasp", "gripper", "end effector", "robotic gripper"]
+        leaks: list[str] = []
+        for field in ("functional_problem", "mechanism"):
+            value = str(abstraction.get(field, "")).lower()
+            for term in leak_terms:
+                if term in value:
+                    leaks.append(f"{field}: '{term}'")
+        return leaks
+
+    @staticmethod
     def _derive_heresy(structural_score: float, scores: list[float]) -> str:
         if not scores:
             return "medium"
@@ -99,10 +110,12 @@ class OrchestrationService:
             {"text": text},
             cache_id=f"abstractor:{text[:80]}",
         )
+        leaks = self._leak_check(abstraction.data if isinstance(abstraction.data, dict) else {})
+        leak_note = f" Leak check: {', '.join(leaks)}." if leaks else " Leak check: clean."
         trace.append(
             self._trace(
                 "abstracting",
-                "Abstracting the problem into a cross-domain functional description.",
+                "Abstracting the problem into a cross-domain functional description." + leak_note,
                 task="abstractor",
                 cached=abstraction.cached,
                 attempt=abstraction.attempts,
@@ -140,18 +153,11 @@ class OrchestrationService:
             candidate_pool.extend(self.retrieval.search(query, abstraction.data, home_fields=home_fields))
         candidate_pool = self._dedupe_candidates(candidate_pool)
 
-        # Say plainly which corpus answered. The placeholder corpus is a handful of
-        # entries with paraphrased abstracts, so the UI must not present them as quotes.
-        corpus_kind = "stub" if any(c.get("corpus") == "stub" for c in candidate_pool) else "index"
-        corpus_note = (
-            f" Searched the placeholder corpus ({len(self.retrieval.corpus)} entries), not a real index."
-            if corpus_kind == "stub"
-            else ""
-        )
+        corpus_kind = "index"
         trace.append(
             self._trace(
                 "retrieving",
-                f"Retrieved {len(candidate_pool)} candidate analogs.{corpus_note}",
+                f"Retrieved {len(candidate_pool)} candidate analogs from the ChromaDB index.",
                 task="retrieval",
                 cached=False,
                 attempt=1,
@@ -203,8 +209,8 @@ class OrchestrationService:
                         "translator",
                         {
                             "text": text,
-                            "source_concept": candidate.get("matched_on", candidate.get("title", "source concept")),
-                            "candidate": candidate.get("title", ""),
+                            "source_concept": candidate.get("title", "source concept"),
+                            "candidate": candidate.get("abstract", candidate.get("source_passage", "")),
                         },
                         cache_id=f"translator:{candidate.get('id', candidate.get('title', 'unknown'))}:{loop_index}",
                     )

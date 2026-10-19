@@ -132,7 +132,7 @@ def test_passage_comes_from_the_corpus_not_the_model(monkeypatch) -> None:
     service = OrchestrationService()
     run = service.run(HERO_TEXT, ["robotics_mech_eng"], 0.0)
 
-    abstracts = {paper["abstract"] for paper in service.retrieval.corpus}
+    abstracts = {paper["abstract"] for paper in service.retrieval._paper_cache.values()}
     assert run["results"]
     for result in run["results"]:
         assert result["source_passage"] in abstracts
