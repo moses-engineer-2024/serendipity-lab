@@ -2,6 +2,33 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
+
+_DOTENV_LOADED = False
+
+
+def load_env_once() -> None:
+    """Load `.env` from the repo root (and `backend/`) exactly once.
+
+    The API key lives in a local gitignored `.env`. Nothing else in the app
+    loads it, so without this the gateway would silently fall back to dry-run
+    fixtures during a live demo.
+    """
+    global _DOTENV_LOADED
+    if _DOTENV_LOADED:
+        return
+    _DOTENV_LOADED = True
+    try:
+        from dotenv import load_dotenv
+    except Exception:
+        return
+    root = Path(__file__).resolve().parents[4]
+    for candidate in (root / ".env", root / "backend" / ".env"):
+        if candidate.is_file():
+            load_dotenv(candidate, override=False)
+
+
+load_env_once()
 
 
 def _get_bool_env(name: str) -> bool:

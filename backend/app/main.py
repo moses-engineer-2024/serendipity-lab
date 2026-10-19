@@ -5,7 +5,12 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import router as api_router
+# Loads the gitignored `.env` (GEMINI_API_KEY etc.) before the gateway reads it.
+from app.core.config.settings import load_env_once
+
+load_env_once()
+
+from app.api.routes import router as api_router  # noqa: E402
 
 # The dev frontend runs on another port, so the browser needs CORS to read the stream.
 # Set CORS_ORIGINS (comma separated) to override; never use "*" with credentials.
