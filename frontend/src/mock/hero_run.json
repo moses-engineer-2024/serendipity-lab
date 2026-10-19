@@ -4,22 +4,56 @@
     "generated": "2026-10-17",
     "request": {
       "text": "We are designing an end effector that must pick up objects of unknown, irregular shape (mugs, tools, produce) without per-object programming. Fingered grippers need force sensing and complex control, and they fail on deformable or odd geometries. We want a passive mechanism that conforms to any shape and then holds firmly, with minimal sensing or planning.",
-      "home_fields": ["robotics_mech_eng"],
+      "home_fields": [
+        "robotics_mech_eng"
+      ],
       "chaos": 0.6
     },
     "papers": {
-      "ohern": {"title": "Jamming at zero temperature and zero applied stress: The epitome of disorder", "year": 2003, "doi": "https://doi.org/10.1103/physreve.68.011306", "abstract_source": "openalex", "abstract_chars": 2068},
-      "cates": {"title": "Jamming, Force Chains, and Fragile Matter", "year": 1998, "doi": "https://doi.org/10.1103/physrevlett.81.1841", "abstract_source": "openalex", "abstract_chars": 488},
-      "trappe": {"title": "Jamming phase diagram for attractive particles", "year": "2001", "doi": "10.1038/35081021", "abstract_source": "europepmc", "abstract_chars": 1273},
-      "filler0": {"title": "Emergence of Scaling in Random Networks", "year": 1999, "doi": "https://doi.org/10.1126/science.286.5439.509", "abstract_source": "openalex", "abstract_chars": 716},
-      "filler1": {"title": "Canonical dynamics: Equilibrium phase-space distributions", "year": 1985, "doi": "https://doi.org/10.1103/physreva.31.1695", "abstract_source": "openalex", "abstract_chars": 1111}
+      "ohern": {
+        "title": "Jamming at zero temperature and zero applied stress: The epitome of disorder",
+        "year": 2003,
+        "doi": "https://doi.org/10.1103/physreve.68.011306",
+        "abstract_source": "openalex",
+        "abstract_chars": 2068
+      },
+      "cates": {
+        "title": "Jamming, Force Chains, and Fragile Matter",
+        "year": 1998,
+        "doi": "https://doi.org/10.1103/physrevlett.81.1841",
+        "abstract_source": "openalex",
+        "abstract_chars": 488
+      },
+      "trappe": {
+        "title": "Jamming phase diagram for attractive particles",
+        "year": "2001",
+        "doi": "10.1038/35081021",
+        "abstract_source": "europepmc",
+        "abstract_chars": 1273
+      },
+      "filler0": {
+        "title": "Emergence of Scaling in Random Networks",
+        "year": 1999,
+        "doi": "https://doi.org/10.1126/science.286.5439.509",
+        "abstract_source": "openalex",
+        "abstract_chars": 716
+      },
+      "filler1": {
+        "title": "Canonical dynamics: Equilibrium phase-space distributions",
+        "year": 1985,
+        "doi": "https://doi.org/10.1103/physreva.31.1695",
+        "abstract_source": "openalex",
+        "abstract_chars": 1111
+      }
     },
     "excluded_from_corpus": "Liu 2010 'The Jamming Transition and the Marginally Jammed Solid' - OpenAlex types it `review`, corpus.yaml filters type=article, so it cannot appear in results.",
     "not_used": "Brown 2010, the outcome paper for this case, is absent by design: corpus.yaml exclude_titles_from keeps it out of the corpus."
   },
   "request": {
     "text": "We are designing an end effector that must pick up objects of unknown, irregular shape (mugs, tools, produce) without per-object programming. Fingered grippers need force sensing and complex control, and they fail on deformable or odd geometries. We want a passive mechanism that conforms to any shape and then holds firmly, with minimal sensing or planning.",
-    "home_fields": ["robotics_mech_eng"],
+    "home_fields": [
+      "robotics_mech_eng"
+    ],
     "chaos": 0.6
   },
   "abstractions": [
@@ -43,95 +77,296 @@
     }
   ],
   "stream": [
-    {"type": "trace", "step": "abstracting", "message": "Stripping domain terms...", "ts": 1712345678, "meta": {"task": "abstractor", "cached": false, "attempt": 0, "ms": 3120}},
-    {"type": "trace", "step": "abstracting", "message": "Mechanism field is nullable; treating as null for this input.", "ts": 1712345679, "meta": {"task": "abstractor", "cached": true, "attempt": 0, "ms": 0}},
-    {"type": "trace", "step": "decomposing", "message": "Splitting into 3 sub-problems...", "ts": 1712345680, "meta": {"task": "decomposer", "cached": false, "attempt": 0, "ms": 2140}},
-    {"type": "trace", "step": "decomposing", "message": "Sub-problem 1: a single global signal controls rigidity.", "ts": 1712345681, "meta": {"task": "decomposer", "cached": true, "attempt": 0, "ms": 0}},
-    {"type": "trace", "step": "decomposing", "message": "Sub-problem 2: conformity without per-object programming.", "ts": 1712345682, "meta": {"task": "decomposer", "cached": true, "attempt": 0, "ms": 0}},
-    {"type": "trace", "step": "decomposing", "message": "Sub-problem 3: hold firmly once rigid.", "ts": 1712345683, "meta": {"task": "decomposer", "cached": true, "attempt": 0, "ms": 0}},
-    {"type": "trace", "step": "retrieving", "message": "Querying abstraction index, home field excluded...", "ts": 1712345684},
-    {"type": "trace", "step": "llm_retry", "message": "Schema validation failed on candidate 7, retrying with error text.", "ts": 1712345685, "meta": {"task": "translator", "cached": false, "attempt": 1, "ms": 1980}},
-    {"type": "trace", "step": "reviewing", "message": "Skeptic is scoring 12 candidates...", "ts": 1712345686, "meta": {"task": "skeptic", "cached": false, "attempt": 0, "ms": 4310}},
-    {"type": "trace", "step": "reviewing", "message": "Rejected 6 candidates: mechanism restates the home field.", "ts": 1712345687, "meta": {"task": "skeptic", "cached": true, "attempt": 0, "ms": 0}},
-    {"type": "trace", "step": "rewriting", "message": "Weak candidates found, rewriting queries...", "ts": 1712345688, "meta": {"task": "decomposer", "cached": false, "attempt": 0, "ms": 2260}},
-    {"type": "trace", "step": "retrieving", "message": "Re-retrieving with rewritten queries...", "ts": 1712345689},
-    {"type": "trace", "step": "reviewing", "message": "Second pass complete. 5 candidates survive the drop rule.", "ts": 1712345690, "meta": {"task": "skeptic", "cached": false, "attempt": 0, "ms": 3120}},
-    {"type": "trace", "step": "translating", "message": "Building grounded hypotheses with source passages...", "ts": 1712345691, "meta": {"task": "translator", "cached": false, "attempt": 0, "ms": 5240}},
-    {"type": "trace", "step": "ranking", "message": "Ranking by structural_score...", "ts": 1712345692},
     {
-      "type": "result", "id": "r1",
+      "type": "trace",
+      "step": "abstracting",
+      "message": "Stripping domain terms...",
+      "ts": 1712345678,
+      "meta": {
+        "task": "abstractor",
+        "cached": false,
+        "attempt": 0,
+        "ms": 3120
+      }
+    },
+    {
+      "type": "trace",
+      "step": "abstracting",
+      "message": "Mechanism field is nullable; treating as null for this input.",
+      "ts": 1712345679,
+      "meta": {
+        "task": "abstractor",
+        "cached": true,
+        "attempt": 0,
+        "ms": 0
+      }
+    },
+    {
+      "type": "trace",
+      "step": "decomposing",
+      "message": "Splitting into 3 sub-problems...",
+      "ts": 1712345680,
+      "meta": {
+        "task": "decomposer",
+        "cached": false,
+        "attempt": 0,
+        "ms": 2140
+      }
+    },
+    {
+      "type": "trace",
+      "step": "decomposing",
+      "message": "Sub-problem 1: a single global signal controls rigidity.",
+      "ts": 1712345681,
+      "meta": {
+        "task": "decomposer",
+        "cached": true,
+        "attempt": 0,
+        "ms": 0
+      }
+    },
+    {
+      "type": "trace",
+      "step": "decomposing",
+      "message": "Sub-problem 2: conformity without per-object programming.",
+      "ts": 1712345682,
+      "meta": {
+        "task": "decomposer",
+        "cached": true,
+        "attempt": 0,
+        "ms": 0
+      }
+    },
+    {
+      "type": "trace",
+      "step": "decomposing",
+      "message": "Sub-problem 3: hold firmly once rigid.",
+      "ts": 1712345683,
+      "meta": {
+        "task": "decomposer",
+        "cached": true,
+        "attempt": 0,
+        "ms": 0
+      }
+    },
+    {
+      "type": "trace",
+      "step": "retrieving",
+      "message": "Querying abstraction index, home field excluded...",
+      "ts": 1712345684
+    },
+    {
+      "type": "trace",
+      "step": "llm_retry",
+      "message": "Schema validation failed on candidate 7, retrying with error text.",
+      "ts": 1712345685,
+      "meta": {
+        "task": "translator",
+        "cached": false,
+        "attempt": 1,
+        "ms": 1980
+      }
+    },
+    {
+      "type": "trace",
+      "step": "reviewing",
+      "message": "Skeptic is scoring 12 candidates...",
+      "ts": 1712345686,
+      "meta": {
+        "task": "skeptic",
+        "cached": false,
+        "attempt": 0,
+        "ms": 4310
+      }
+    },
+    {
+      "type": "trace",
+      "step": "reviewing",
+      "message": "Rejected 6 candidates: mechanism restates the home field.",
+      "ts": 1712345687,
+      "meta": {
+        "task": "skeptic",
+        "cached": true,
+        "attempt": 0,
+        "ms": 0
+      }
+    },
+    {
+      "type": "trace",
+      "step": "rewriting",
+      "message": "Weak candidates found, rewriting queries...",
+      "ts": 1712345688,
+      "meta": {
+        "task": "decomposer",
+        "cached": false,
+        "attempt": 0,
+        "ms": 2260
+      }
+    },
+    {
+      "type": "trace",
+      "step": "retrieving",
+      "message": "Re-retrieving with rewritten queries...",
+      "ts": 1712345689
+    },
+    {
+      "type": "trace",
+      "step": "reviewing",
+      "message": "Second pass complete. 5 candidates survive the drop rule.",
+      "ts": 1712345690,
+      "meta": {
+        "task": "skeptic",
+        "cached": false,
+        "attempt": 0,
+        "ms": 3120
+      }
+    },
+    {
+      "type": "trace",
+      "step": "translating",
+      "message": "Building grounded hypotheses with source passages...",
+      "ts": 1712345691,
+      "meta": {
+        "task": "translator",
+        "cached": false,
+        "attempt": 0,
+        "ms": 5240
+      }
+    },
+    {
+      "type": "trace",
+      "step": "ranking",
+      "message": "Ranking by structural_score...",
+      "ts": 1712345692
+    },
+    {
+      "type": "result",
+      "id": "r1",
       "title": "Jamming at zero temperature and zero applied stress: The epitome of disorder",
       "year": 2003,
       "venue": "Physical review. E, Statistical physics, plasmas, fluids, and related interdisciplinary topics",
       "doi": "https://doi.org/10.1103/physreve.68.011306",
       "source_field": "soft_matter_stat_physics",
-      "structural_score": 0.82, "matched_on": "mechanism", "heresy": "high",
+      "structural_score": 0.82,
+      "matched_on": "mechanism",
+      "heresy": "high",
       "hypothesis": "Confine a compliant medium around the object, then drive it past a jamming transition so the assembly goes from fluid-like to load-bearing. One global signal, no per-object programming.",
       "source_passage": "At low packing fractions phi, the system is not jammed and each particle can move without impediment from its neighbors. For each configuration, there is a unique jamming threshold phi(c) at which particles can no longer avoid each other, and the bulk and shear moduli simultaneously become nonzero.",
       "mapping": [
-        {"source_concept": "Jamming transition (fluid-like to rigid)", "home_concept": "Gripper switching from compliant to rigid"},
-        {"source_concept": "Granular particles", "home_concept": "Flexible membrane filled with particulate"},
-        {"source_concept": "Packing fraction / confining pressure", "home_concept": "Applied vacuum level"},
-        {"source_concept": "Force chains", "home_concept": "Load-bearing contact network around the object"}
+        {
+          "source_concept": "Jamming transition (fluid-like to rigid)",
+          "home_concept": "Gripper switching from compliant to rigid"
+        },
+        {
+          "source_concept": "Granular particles",
+          "home_concept": "Flexible membrane filled with particulate"
+        },
+        {
+          "source_concept": "Packing fraction / confining pressure",
+          "home_concept": "Applied vacuum level"
+        },
+        {
+          "source_concept": "Force chains",
+          "home_concept": "Load-bearing contact network around the object"
+        }
       ],
       "reviewer_note": "Holding force depends on friction and confinement, so very smooth, heavy or delicate objects are likely harder. Expect failure on polished or high-friction surfaces."
     },
     {
-      "type": "result", "id": "r2",
+      "type": "result",
+      "id": "r2",
       "title": "Jamming phase diagram for attractive particles",
-      "year": "2001", "venue": null, "doi": "10.1038/35081021",
+      "year": "2001",
+      "venue": null,
+      "doi": "10.1038/35081021",
       "source_field": "soft_matter_stat_physics",
-      "structural_score": 0.76, "matched_on": "problem", "heresy": "high",
+      "structural_score": 0.76,
+      "matched_on": "problem",
+      "heresy": "high",
       "hypothesis": "Use the same stiffening transition with attractive rather than repulsive particles, which widens the range of shapes that can be held.",
       "source_passage": "A wide variety of systems, including granular media, colloidal suspensions and molecular systems, exhibit non-equilibrium transitions from a fluid-like to a solid-like state, characterized solely by the sudden arrest of their dynamics. Crowding or jamming of the constituent particles traps them kinetically, precluding further exploration of the phase space.",
       "mapping": [
-        {"source_concept": "Attractive particle jamming", "home_concept": "Passive grip that grips harder as it is squeezed"},
-        {"source_concept": "Phase diagram in density vs. attraction", "home_concept": "Operating envelope over object size and softness"}
+        {
+          "source_concept": "Attractive particle jamming",
+          "home_concept": "Passive grip that grips harder as it is squeezed"
+        },
+        {
+          "source_concept": "Phase diagram in density vs. attraction",
+          "home_concept": "Operating envelope over object size and softness"
+        }
       ],
       "reviewer_note": "Attractive particles introduce a cohesive mode where the gripper can retain an object without applied vacuum. Not obviously robust to particulate contamination."
     },
     {
-      "type": "result", "id": "r3",
+      "type": "result",
+      "id": "r3",
       "title": "Jamming, Force Chains, and Fragile Matter",
-      "year": 1998, "venue": "Physical Review Letters",
+      "year": 1998,
+      "venue": "Physical Review Letters",
       "doi": "https://doi.org/10.1103/physrevlett.81.1841",
       "source_field": "soft_matter_stat_physics",
-      "structural_score": 0.71, "matched_on": "mechanism", "heresy": "medium",
+      "structural_score": 0.71,
+      "matched_on": "mechanism",
+      "heresy": "medium",
       "hypothesis": "Once rigid, the load is carried by a sparse contact network, so the design target is the strength of that network rather than the medium.",
       "source_passage": "We argue that such media are generically ``fragile,'' unable to support certain types of incremental loading without plastic rearrangement. Fragility is linked to the marginal stability of force chain networks within the material.",
       "mapping": [
-        {"source_concept": "Force chains and fragile matter", "home_concept": "Which contacts carry load and which fail first"}
+        {
+          "source_concept": "Force chains and fragile matter",
+          "home_concept": "Which contacts carry load and which fail first"
+        }
       ],
       "reviewer_note": "Fragility is the concern: a small number of contacts carries most of the load, so localised damage may cause sudden loss of grip rather than a graceful degradation."
     },
     {
-      "type": "result", "id": "r4",
+      "type": "result",
+      "id": "r4",
       "title": "Emergence of Scaling in Random Networks",
-      "year": 1999, "venue": "Science",
+      "year": 1999,
+      "venue": "Science",
       "doi": "https://doi.org/10.1126/science.286.5439.509",
       "source_field": "soft_matter_stat_physics",
-      "structural_score": 0.44, "matched_on": "problem", "heresy": "low",
+      "structural_score": 0.44,
+      "matched_on": "problem",
+      "heresy": "low",
       "hypothesis": "Weak structural match on 'distributed nodes forming robust structure'. Retained to show the tail of the ranking, not a real collision.",
       "source_passage": "Systems as diverse as genetic networks or the World Wide Web are best described as networks with complex topology. A common property of many large networks is that the vertex connectivities follow a scale-free power-law distribution.",
       "mapping": [
-        {"source_concept": "Scale-free degree distribution", "home_concept": "Structural robustness of the gripper's contact network"}
+        {
+          "source_concept": "Scale-free degree distribution",
+          "home_concept": "Structural robustness of the gripper's contact network"
+        }
       ],
       "reviewer_note": "The analogy is about network topology, not about a stiffening mechanism. This is the weakest surviving candidate and is shown to exercise the tail of the UI."
     },
     {
-      "type": "result", "id": "r5",
+      "type": "result",
+      "id": "r5",
       "title": "Canonical dynamics: Equilibrium phase-space distributions",
-      "year": 1985, "venue": "Physical Review A",
+      "year": 1985,
+      "venue": "Physical Review A",
       "doi": "https://doi.org/10.1103/physreva.31.1695",
       "source_field": "soft_matter_stat_physics",
-      "structural_score": 0.38, "matched_on": "mechanism", "heresy": "low",
+      "structural_score": 0.38,
+      "matched_on": "mechanism",
+      "heresy": "low",
       "hypothesis": "Weak structural match on phase-space redistribution under constraint.",
       "source_passage": "Nos\\'e has modified Newtonian dynamics so as to reproduce both the canonical and the isothermal-isobaric probability densities in the phase space of an N-body system. He did this by scaling time (with s) and distance (with ${V}^{1/D}$ in D dimensions) through Lagrangian equations of motion.",
       "mapping": [
-        {"source_concept": "Equilibrium phase-space distribution", "home_concept": "Distribution of particles between loaded and slack regions"}
+        {
+          "source_concept": "Equilibrium phase-space distribution",
+          "home_concept": "Distribution of particles between loaded and slack regions"
+        }
       ],
       "reviewer_note": "Marginal. Included so the mock has five results, matching retrieval.results_shown = 5."
     },
-    {"type": "done", "run_id": "mock-hero-0001", "ts": 1712345693, "results_shown": 5, "candidates_reviewed": 12, "loops_used": 1}
+    {
+      "type": "done",
+      "run_id": "mock-hero-0001",
+      "ts": 1712345693,
+      "results_shown": 5,
+      "candidates_reviewed": 12,
+      "loops_used": 1
+    }
   ]
 }

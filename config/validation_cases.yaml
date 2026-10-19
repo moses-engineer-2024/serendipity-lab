@@ -3,178 +3,320 @@
 # Record the git commit hash of this lock in `locked_at_commit`.
 version: 1
 locked_at_commit: d561ca9966b2919a0966e162146aeee6c2dd5466
-
-# ---------------------------------------------------------------------------
-# Protocol
-# ---------------------------------------------------------------------------
 protocol:
   systems:
-    baseline_raw_excl:                 # PRIMARY baseline
-      description: "bge-base embedding of raw user text vs raw abstracts, same corpus, home-field exclusion applied"
-      note: "Same exclusion as ours, so the comparison isolates the effect of structural abstraction. Never re-tuned."
-    baseline_raw_noexcl:               # secondary, reported but not the headline
-      description: "same as above without home-field exclusion"
-    ours_retrieval_only:               # ablation: abstraction + dual-vector search, no agent loop
-      description: "abstractor + decomposer queries + dual-vector retrieval, ranked by structural_score"
-    ours_full:                         # what the UI shows
-      description: "retrieval + skeptic review + rewrite loop + drop rule; list = surviving candidates only, no padding"
+    baseline_raw_excl:
+      description: bge-base embedding of raw user text vs raw abstracts, same corpus, home-field exclusion
+        applied
+      note: Same exclusion as ours, so the comparison isolates the effect of structural abstraction. Never
+        re-tuned.
+    baseline_raw_noexcl:
+      description: same as above without home-field exclusion
+    ours_retrieval_only:
+      description: abstractor + decomposer queries + dual-vector retrieval, ranked by structural_score
+    ours_full:
+      description: retrieval + skeptic review + rewrite loop + drop rule; list = surviving candidates
+        only, no padding
   metric:
-    primary: "hit@5 and hit@10: at least one acceptable_source paper appears in the top-k (deduplicated by paper)"
-    also_report: "rank of the first acceptable_source; 'matched_on' (problem or mechanism) for ours"
-    not_counted: "other relevant-looking papers; only pre-registered acceptable_sources count (conservative)"
+    primary: 'hit@5 and hit@10: at least one acceptable_source paper appears in the top-k (deduplicated
+      by paper)'
+    also_report: rank of the first acceptable_source; 'matched_on' (problem or mechanism) for ours
+    not_counted: other relevant-looking papers; only pre-registered acceptable_sources count (conservative)
   split:
-    dev: [jamming_gripper, gecko_adhesive]          # may be used freely while developing prompts
-    held_out: [kidney_exchange, physarum_network, simulated_annealing, ant_colony_routing]
-    held_out_rule: "Held-out inputs are not run through any system before the Hour 14 gate. Their seed papers and inputs are never used as few-shot examples or prompt text."
+    dev:
+    - jamming_gripper
+    - gecko_adhesive
+    held_out:
+    - kidney_exchange
+    - physarum_network
+    - simulated_annealing
+    held_out_rule: Held-out inputs are not run through any system before the Hour 14 gate. Their seed
+      papers and inputs are never used as few-shot examples or prompt text.
   reporting:
-    - "First full run at the Hour 14 gate (held-out cases untuned): report as-is."
-    - "Final run after any tuning: report in full, with the list of cases that influenced tuning."
-    - "After ANY change to abstractor prompt, schema, model, embedding model, or corpus, re-run ALL cases and report only complete re-runs."
-    - "Table footer: git commit, prompt SHA-256 prefixes, model names, corpus size."
-    - "Report failures and why. The failures become the limitations slide. 'We win 4 of 6' is a good result."
+  - 'First full run at the Hour 14 gate (held-out cases untuned): report as-is.'
+  - 'Final run after any tuning: report in full, with the list of cases that influenced tuning.'
+  - After ANY change to abstractor prompt, schema, model, embedding model, or corpus, re-run ALL cases
+    and report only complete re-runs.
+  - 'Table footer: git commit, prompt SHA-256 prefixes, model names, corpus size.'
+  - Report failures and why. The failures become the limitations slide. 'We win 4 of 6' is a good result.
   few_shot_policy:
-    rule: "Few-shot analogies must come from outside every case in this file."
-    safe_candidates:                   # suggested, none of these is a validation case
-      - "epidemic spreading models -> malware / information spread"
-      - "immune-system negative selection -> anomaly detection"
-      - "percolation theory -> network robustness"
-      - "error-correcting codes -> redundancy in biological repair"
+    rule: Few-shot analogies must come from outside every case in this file.
+    safe_candidates:
+    - epidemic spreading models -> malware / information spread
+    - immune-system negative selection -> anomaly detection
+    - percolation theory -> network robustness
+    - error-correcting codes -> redundancy in biological repair
   input_language_check:
-    rule: "Each input_text uses home-field language only. A teammate who has not seen the answer reads it and flags any word that gives away the source field."
+    rule: Each input_text uses home-field language only. A teammate who has not seen the answer reads
+      it and flags any word that gives away the source field.
     status: unchecked
-
-# ---------------------------------------------------------------------------
-# Corpus rules for these cases
-# ---------------------------------------------------------------------------
 corpus_rules:
-  outcome_papers: "The breakthrough papers (listed per case under excluded_outcome_papers) are EXCLUDED from the corpus. They contain the answer's home-field vocabulary and would make the test trivial or meaningless. They exist only as pitch references."
-  seed_gate: "A case stays in the plan only if at least 2 acceptable_sources have a retrievable abstract (status: verified). Otherwise drop the case at Hour 2. Minimum 5 cases must remain."
-  seed_status_values: [unverified, verified, manual_paste, missing]
-
-# ---------------------------------------------------------------------------
-# Cases
-# ---------------------------------------------------------------------------
+  outcome_papers: The breakthrough papers (listed per case under excluded_outcome_papers) are EXCLUDED
+    from the corpus. They contain the answer's home-field vocabulary and would make the test trivial or
+    meaningless. They exist only as pitch references.
+  seed_gate: 'A case stays in the plan only if at least 2 acceptable_sources have a retrievable abstract
+    (status: verified). Otherwise drop the case at Hour 2. Minimum 5 cases must remain.'
+  seed_status_values:
+  - unverified
+  - verified
+  - manual_paste
+  - missing
 cases:
+- id: jamming_gripper
+  role: hero
+  split: dev
+  home_fields:
+  - robotics_mech_eng
+  source_field: soft_matter_stat_physics
+  input_text: 'We are designing an end effector that must pick up objects of unknown, irregular shape
+    (mugs, tools, produce) without per-object programming. Fingered grippers need force sensing and complex
+    control, and they fail on deformable or odd geometries. We want a passive mechanism that conforms
+    to any shape and then holds firmly, with minimal sensing or planning.
 
-  - id: jamming_gripper
-    role: hero
-    split: dev
-    home_fields: [robotics_mech_eng]
-    source_field: soft_matter_stat_physics
-    input_text: >
-      We are designing an end effector that must pick up objects of unknown, irregular shape
-      (mugs, tools, produce) without per-object programming. Fingered grippers need force
-      sensing and complex control, and they fail on deformable or odd geometries. We want a
-      passive mechanism that conforms to any shape and then holds firmly, with minimal sensing
-      or planning.
-    abstract_problem_target: "A mechanism that is soft and conformal on command, then rigid on command, driven by one global control signal rather than distributed actuation."
-    acceptable_sources:
-      - { title: "Jamming at zero temperature and zero applied stress: The epitome of disorder", first_author: "O'Hern", year: 2003, venue: "Physical Review E", field: soft_matter_stat_physics, abstract_source: openalex, status: unverified }
-      - { title: "Jamming, force chains, and fragile matter", first_author: "Cates", year: 1998, venue: "Physical Review Letters", field: soft_matter_stat_physics, abstract_source: openalex, status: unverified }
-      - { title: "The jamming transition and the marginally jammed solid", first_author: "Liu", year: 2010, venue: "Annual Review of Condensed Matter Physics", field: soft_matter_stat_physics, abstract_source: openalex, status: unverified }
-      - { title: "Jamming phase diagram for attractive particles", first_author: "Trappe", year: 2001, venue: "Nature", field: soft_matter_stat_physics, abstract_source: openalex, status: unverified }
-    excluded_outcome_papers:
-      - { title: "Universal robotic gripper based on the jamming of granular material", first_author: "Brown", year: 2010, venue: "PNAS" }
-    risks: "Historical case, so frame it as 'would this system have surfaced it?', not a new discovery. Jamming-gripper papers now exist in robotics; they are home-field and excluded from results."
+    '
+  abstract_problem_target: A mechanism that is soft and conformal on command, then rigid on command, driven
+    by one global control signal rather than distributed actuation.
+  acceptable_sources:
+  - title: 'Jamming at zero temperature and zero applied stress: The epitome of disorder'
+    first_author: O'Hern
+    year: 2003
+    venue: Physical Review E
+    field: soft_matter_stat_physics
+    abstract_source: openalex
+    status: verified
+  - title: Jamming, force chains, and fragile matter
+    first_author: Cates
+    year: 1998
+    venue: Physical Review Letters
+    field: soft_matter_stat_physics
+    abstract_source: openalex
+    status: verified
+  - title: The jamming transition and the marginally jammed solid
+    first_author: Liu
+    year: 2010
+    venue: Annual Review of Condensed Matter Physics
+    field: soft_matter_stat_physics
+    abstract_source: openalex
+    status: manual_paste
+  - title: Jamming phase diagram for attractive particles
+    first_author: Trappe
+    year: 2001
+    venue: Nature
+    field: soft_matter_stat_physics
+    abstract_source: europepmc
+    status: verified
+  excluded_outcome_papers:
+  - title: Universal robotic gripper based on the jamming of granular material
+    first_author: Brown
+    year: 2010
+    venue: PNAS
+  risks: Historical case, so frame it as 'would this system have surfaced it?', not a new discovery. Jamming-gripper
+    papers now exist in robotics; they are home-field and excluded from results.
+- id: gecko_adhesive
+  role: validation
+  split: dev
+  home_fields:
+  - materials_fluids_aero
+  source_field: organismal_bio_ecology
+  input_text: 'We need a reusable dry adhesive that bonds strongly to smooth, varied surfaces without
+    glues or chemical bonding agents, resists contamination, and can be released and re-applied thousands
+    of times.
 
-  - id: gecko_adhesive
-    role: validation
-    split: dev
-    home_fields: [materials_fluids_aero]
-    source_field: organismal_bio_ecology
-    input_text: >
-      We need a reusable dry adhesive that bonds strongly to smooth, varied surfaces without
-      glues or chemical bonding agents, resists contamination, and can be released and
-      re-applied thousands of times.
-    abstract_problem_target: "Strong, reversible, contamination-tolerant attachment to arbitrary smooth surfaces without a bonding agent."
-    acceptable_sources:
-      - { title: "Adhesive force of a single gecko foot-hair", first_author: "Autumn", year: 2000, venue: "Nature", field: organismal_bio_ecology, abstract_source: openalex, status: unverified }
-      - { title: "Evidence for van der Waals adhesion in gecko setae", first_author: "Autumn", year: 2002, venue: "PNAS", field: organismal_bio_ecology, abstract_source: openalex, status: unverified }
-      - { title: "From micro to nano contacts in biological attachment devices", first_author: "Arzt", year: 2003, venue: "PNAS", field: organismal_bio_ecology, abstract_source: openalex, status: unverified }
-    excluded_outcome_papers:
-      - { title: "Microfabricated adhesive mimicking gecko foot-hair", first_author: "Geim", year: 2003, venue: "Nature Materials" }
-    risks: "'adhesive' appears in both input and sources, so the baseline may do well here. That is a real result; report it."
+    '
+  abstract_problem_target: Strong, reversible, contamination-tolerant attachment to arbitrary smooth surfaces
+    without a bonding agent.
+  acceptable_sources:
+  - title: Adhesive force of a single gecko foot-hair
+    first_author: Autumn
+    year: 2000
+    venue: Nature
+    field: organismal_bio_ecology
+    abstract_source: europepmc
+    status: verified
+  - title: Evidence for van der Waals adhesion in gecko setae
+    first_author: Autumn
+    year: 2002
+    venue: PNAS
+    field: organismal_bio_ecology
+    abstract_source: openalex
+    status: verified
+  - title: From micro to nano contacts in biological attachment devices
+    first_author: Arzt
+    year: 2003
+    venue: PNAS
+    field: organismal_bio_ecology
+    abstract_source: openalex
+    status: verified
+  excluded_outcome_papers:
+  - title: Microfabricated adhesive mimicking gecko foot-hair
+    first_author: Geim
+    year: 2003
+    venue: Nature Materials
+  risks: '''adhesive'' appears in both input and sources, so the baseline may do well here. That is a
+    real result; report it.'
+- id: kidney_exchange
+  role: validation
+  split: held_out
+  home_fields:
+  - medicine_clinical
+  source_field: economics_game_theory
+  input_text: 'Many patients with end-stage kidney disease have a willing living donor who is medically
+    incompatible with them. We need a way to arrange swaps among incompatible patient-donor pairs so that
+    more transplants happen, no money changes hands, and no patient ends up worse off than before.
 
-  - id: kidney_exchange
-    role: validation
-    split: held_out
-    home_fields: [medicine_clinical]
-    source_field: economics_game_theory
-    input_text: >
-      Many patients with end-stage kidney disease have a willing living donor who is medically
-      incompatible with them. We need a way to arrange swaps among incompatible patient-donor
-      pairs so that more transplants happen, no money changes hands, and no patient ends up
-      worse off than before.
-    abstract_problem_target: "Allocating indivisible items among agents with preferences, without money, so that trades are individually rational and no one is worse off."
-    acceptable_sources:
-      - { title: "On cores and indivisibility", first_author: "Shapley", year: 1974, venue: "Journal of Mathematical Economics", field: economics_game_theory, abstract_source: openalex, status: unverified }
-      - { title: "College admissions and the stability of marriage", first_author: "Gale", year: 1962, venue: "American Mathematical Monthly", field: economics_game_theory, abstract_source: openalex, status: unverified }
-      - { title: "The evolution of the labor market for medical interns and residents: a case study in game theory", first_author: "Roth", year: 1984, venue: "Journal of Political Economy", field: economics_game_theory, abstract_source: openalex, status: unverified }
-      - { title: "School choice: a mechanism design approach", first_author: "Abdulkadiroglu", year: 2003, venue: "American Economic Review", field: economics_game_theory, abstract_source: openalex, status: unverified }
-    excluded_outcome_papers:
-      - { title: "Kidney exchange", first_author: "Roth", year: 2004, venue: "Quarterly Journal of Economics" }
-      - { title: "Pairwise kidney exchange", first_author: "Roth", year: 2005, venue: "Journal of Economic Theory" }
-    risks: "Older math-econ papers often lack abstracts in aggregators. Most likely case to hit the seed gate. Use manual_paste or drop the case."
+    '
+  abstract_problem_target: Allocating indivisible items among agents with preferences, without money,
+    so that trades are individually rational and no one is worse off.
+  acceptable_sources:
+  - title: On cores and indivisibility
+    first_author: Shapley
+    year: 1974
+    venue: Journal of Mathematical Economics
+    field: economics_game_theory
+    abstract_source: openalex
+    status: manual_paste
+  - title: College admissions and the stability of marriage
+    first_author: Gale
+    year: 1962
+    venue: American Mathematical Monthly
+    field: economics_game_theory
+    abstract_source: openalex
+    status: manual_paste
+  - title: 'The evolution of the labor market for medical interns and residents: a case study in game
+      theory'
+    first_author: Roth
+    year: 1984
+    venue: Journal of Political Economy
+    field: economics_game_theory
+    abstract_source: openalex
+    status: verified
+  - title: 'School choice: a mechanism design approach'
+    first_author: Abdulkadiroglu
+    year: 2003
+    venue: American Economic Review
+    field: economics_game_theory
+    abstract_source: openalex
+    status: verified
+  excluded_outcome_papers:
+  - title: Kidney exchange
+    first_author: Roth
+    year: 2004
+    venue: Quarterly Journal of Economics
+  - title: Pairwise kidney exchange
+    first_author: Roth
+    year: 2005
+    venue: Journal of Economic Theory
+  risks: Older math-econ papers often lack abstracts in aggregators. Most likely case to hit the seed
+    gate. Use manual_paste or drop the case.
+- id: physarum_network
+  role: validation
+  split: held_out
+  home_fields:
+  - civil_transport_arch
+  source_field: organismal_bio_ecology
+  input_text: 'We need to design an efficient, fault-tolerant transport network connecting distributed
+    stations under a limited construction budget. No central planner can compute a global optimum, and
+    the network should adapt as demand patterns or failures change.
 
-  - id: physarum_network
-    role: validation
-    split: held_out
-    home_fields: [civil_transport_arch]
-    source_field: organismal_bio_ecology
-    input_text: >
-      We need to design an efficient, fault-tolerant transport network connecting distributed
-      stations under a limited construction budget. No central planner can compute a global
-      optimum, and the network should adapt as demand patterns or failures change.
-    abstract_problem_target: "Adaptive formation of low-cost, fault-tolerant flow networks between distributed nodes using only local reinforcement of used paths."
-    acceptable_sources:
-      - { title: "Maze-solving by an amoeboid organism", first_author: "Nakagaki", year: 2000, venue: "Nature", field: organismal_bio_ecology, abstract_source: openalex, status: unverified }
-      - { title: "Obtaining multiple separate food sources: behavioural intelligence in the Physarum plasmodium", first_author: "Nakagaki", year: 2004, venue: "Proceedings of the Royal Society B", field: organismal_bio_ecology, abstract_source: openalex, status: unverified }
-      - { title: "A mathematical model for adaptive transport network in path finding by true slime mold", first_author: "Tero", year: 2007, venue: "Journal of Theoretical Biology", field: organismal_bio_ecology, abstract_source: openalex, status: unverified }
-    excluded_outcome_papers:
-      - { title: "Rules for biologically inspired adaptive network design", first_author: "Tero", year: 2010, venue: "Science" }
-    risks: "Physarum-inspired network papers exist in CS and transport; the home field is excluded but 'cs_optimization' results could be related work rather than biology. Only acceptable_sources count."
+    '
+  abstract_problem_target: Adaptive formation of low-cost, fault-tolerant flow networks between distributed
+    nodes using only local reinforcement of used paths.
+  acceptable_sources:
+  - title: Maze-solving by an amoeboid organism
+    first_author: Nakagaki
+    year: 2000
+    venue: Nature
+    field: organismal_bio_ecology
+    abstract_source: openalex
+    status: manual_paste
+  - title: 'Obtaining multiple separate food sources: behavioural intelligence in the Physarum plasmodium'
+    first_author: Nakagaki
+    year: 2004
+    venue: Proceedings of the Royal Society B
+    field: organismal_bio_ecology
+    abstract_source: openalex
+    status: verified
+  - title: A mathematical model for adaptive transport network in path finding by true slime mold
+    first_author: Tero
+    year: 2007
+    venue: Journal of Theoretical Biology
+    field: organismal_bio_ecology
+    abstract_source: europepmc
+    status: verified
+  excluded_outcome_papers:
+  - title: Rules for biologically inspired adaptive network design
+    first_author: Tero
+    year: 2010
+    venue: Science
+  risks: Physarum-inspired network papers exist in CS and transport; the home field is excluded but 'cs_optimization'
+    results could be related work rather than biology. Only acceptable_sources count.
+- id: simulated_annealing
+  role: validation
+  split: held_out
+  home_fields:
+  - cs_optimization
+  source_field: soft_matter_stat_physics
+  input_text: 'In large combinatorial placement and routing problems (for example arranging circuit components),
+    greedy local search gets stuck in poor local optima. We need a procedure that accepts occasional worse
+    moves to escape them, with a controllable schedule that tightens over time and settles on a good solution.
 
-  - id: simulated_annealing
-    role: validation
-    split: held_out
-    home_fields: [cs_optimization]
-    source_field: soft_matter_stat_physics
-    input_text: >
-      In large combinatorial placement and routing problems (for example arranging circuit
-      components), greedy local search gets stuck in poor local optima. We need a procedure
-      that accepts occasional worse moves to escape them, with a controllable schedule that
-      tightens over time and settles on a good solution.
-    abstract_problem_target: "Escaping local minima in a rugged cost landscape via controlled stochastic acceptance of uphill moves under a gradually tightening control parameter."
-    acceptable_sources:
-      - { title: "Equation of state calculations by fast computing machines", first_author: "Metropolis", year: 1953, venue: "Journal of Chemical Physics", field: soft_matter_stat_physics, abstract_source: openalex, status: unverified }
-      - { title: "Theory of spin glasses", first_author: "Edwards", year: 1975, venue: "Journal of Physics F: Metal Physics", field: soft_matter_stat_physics, abstract_source: openalex, status: unverified }
-      - { title: "Infinite-ranged models of spin-glasses", first_author: "Kirkpatrick", year: 1978, venue: "Physical Review B", field: soft_matter_stat_physics, abstract_source: openalex, status: unverified }
-    excluded_outcome_papers:
-      - { title: "Optimization by simulated annealing", first_author: "Kirkpatrick", year: 1983, venue: "Science" }
-    risks: "Many modern CS papers cite annealing; they are home-field and excluded."
-
-  - id: ant_colony_routing
-    role: validation
-    split: held_out
-    home_fields: [cs_optimization]
-    source_field: organismal_bio_ecology
-    input_text: >
-      In a large dynamic communication network we must find good routes between nodes with no
-      global map and frequent link changes. Each node can use only local information, and routes
-      should adapt automatically to congestion and failures without a central controller.
-    abstract_problem_target: "Decentralized discovery and continual adaptation of short paths via local, indirect, decaying reinforcement signals."
-    acceptable_sources:
-      - { title: "The self-organizing exploratory pattern of the Argentine ant", first_author: "Deneubourg", year: 1990, venue: "Journal of Insect Behavior", field: organismal_bio_ecology, abstract_source: openalex, status: unverified }
-      - { title: "Self-organized shortcuts in the Argentine ant", first_author: "Goss", year: 1989, venue: "Naturwissenschaften", field: organismal_bio_ecology, abstract_source: openalex, status: unverified }
-      - { title: "Trails and U-turns in the selection of a path by the ant Lasius niger", first_author: "Beckers", year: 1992, venue: "Journal of Theoretical Biology", field: organismal_bio_ecology, abstract_source: openalex, status: unverified }
-    excluded_outcome_papers:
-      - { title: "Ant system: optimization by a colony of cooperating agents", first_author: "Dorigo", year: 1996, venue: "IEEE Transactions on Systems, Man, and Cybernetics, Part B" }
-    risks: "1989-1992 entomology papers may lack abstracts in aggregators. Use PubMed or manual_paste, or drop the case."
-
-# Case outputs are cached for the demo only AFTER the Hour 14 gate:
+    '
+  abstract_problem_target: Escaping local minima in a rugged cost landscape via controlled stochastic
+    acceptance of uphill moves under a gradually tightening control parameter.
+  acceptable_sources:
+  - title: Equation of state calculations by fast computing machines
+    first_author: Metropolis
+    year: 1953
+    venue: Journal of Chemical Physics
+    field: soft_matter_stat_physics
+    abstract_source: openalex
+    status: verified
+  - title: Theory of spin glasses
+    first_author: Edwards
+    year: 1975
+    venue: 'Journal of Physics F: Metal Physics'
+    field: soft_matter_stat_physics
+    abstract_source: openalex
+    status: verified
+  - title: Infinite-ranged models of spin-glasses
+    first_author: Kirkpatrick
+    year: 1978
+    venue: Physical Review B
+    field: soft_matter_stat_physics
+    abstract_source: openalex
+    status: verified
+  excluded_outcome_papers:
+  - title: Optimization by simulated annealing
+    first_author: Kirkpatrick
+    year: 1983
+    venue: Science
+  risks: Many modern CS papers cite annealing; they are home-field and excluded.
 demo_cache_plan:
   hero: jamming_gripper
-  backups_after_gate: [physarum_network, kidney_exchange]
+  backups_after_gate:
+  - physarum_network
+  - kidney_exchange
   emergency: gecko_adhesive
-
-amendments: []   # {date, change, reason}
+amendments:
+- date: '2026-10-17'
+  change: 'Hour 2 seed gate applied. verified/manual_paste status written on all seeds. DROPPED 1 case(s):
+    ant_colony_routing. 5 cases remain; the minimum is 5.'
+  reason: 'Seeds verified against OpenAlex, with abstracts reconstructed from abstract_inverted_index,
+    then Europe PMC and arXiv per corpus.yaml source.fallbacks. OpenAlex alone left physarum_network at
+    1/3; the fallback chain recovered Tero 2007 and brought it to 2/3. ant_colony_routing is unrecoverable:
+    Deneubourg 1990, Goss 1989 and Beckers 1992 carry no abstract in OpenAlex, Europe PMC or arXiv. Dropping
+    it keeps the gate at 5 cases. No input_text, acceptable_sources, metric, baseline or reporting rule
+    was altered. No case has been run, so the protocol is still untuned.'
+- date: '2026-10-17'
+  change: Second amendment. Added excluded_outcome_papers_dropped, retaining Dorigo 1996 for corpus exclusion.
+  reason: Dropping ant_colony_routing removed its excluded_outcome_papers from the file, which silently
+    un-excluded Dorigo 1996 from the corpus. The corpus must not contain a breakthrough paper just because
+    its validation case was dropped. No case, input_text, acceptable_sources, metric, baseline or reporting
+    rule was changed.
+excluded_outcome_papers_dropped:
+- title: 'Ant system: optimization by a colony of cooperating agents'
+  first_author: Dorigo
+  year: 1996
+  venue: IEEE Transactions on Systems, Man, and Cybernetics, Part B
+  reason: outcome paper of ant_colony_routing, dropped at the Hour 2 seed gate. Retained here so the corpus
+    still excludes it; dropping the case must not silently un-exclude a breakthrough paper.

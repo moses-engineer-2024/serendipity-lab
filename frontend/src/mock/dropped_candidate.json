@@ -14,5 +14,8 @@
     "dropped": true,
     "drop_reason": "translator returned no source_passage and no mapping"
   },
-  "trace_context": {"step": "llm_retry", "attempt": 1}
+  "trace_context": {
+    "step": "llm_retry",
+    "attempt": 1
+  }
 }

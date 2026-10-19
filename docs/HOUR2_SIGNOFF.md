@@ -30,17 +30,116 @@ Everything that needed a decision has one. What remains is verification that nee
 - **Tero et al. 2010 and the Roth–Sönmez–Ünver kidney papers are excluded for the same reason.**
 - **Shark-skin riblets and termite mounds were dropped.** The source-side literature with retrievable abstracts was too thin. Gecko adhesion replaced shark skin.
 
-## 3. Hour 2 gate: what is NOT done, because it needs a network and people
+## 3. Hour 2 gate
 
-I could write and decide everything above. I could not reach OpenAlex, arXiv, or PubMed from here, so nothing about paper availability is verified. Seed `status` is `unverified` for all 20 seeds.
+Status as of the close of the Hour 2 window. Two items still need people, not code.
 
-- [ ] **Huddle (15 min, all three):** agree the cut list with B as enforcer. Hand A the §9 schema and mock data, and hand B `docs/llm_gateway_spec.md`.
-- [ ] **Get keys:** `ANTHROPIC_API_KEY` and a free `OPENALEX_API_KEY`.
-- [ ] **Resolve subfields (≈5 min):** run the ingest resolver against `config/corpus.yaml`. Any non-optional name that fails to resolve needs fixing. Commit `config/corpus.lock.yaml`.
-- [ ] **Verify seed abstracts (≈15 min):** for each of the 20 seeds, confirm an abstract is retrievable (OpenAlex, then PubMed or arXiv, then `manual_paste`). Update `status`. A case with fewer than 2 verified acceptable sources is dropped. At least 5 cases must survive. Kidney exchange and ant colony are the likeliest to fail.
-- [ ] **Input-language check (≈5 min):** have A or B read each `input_text` cold and flag any word that gives away the source field. Set `input_language_check.status`.
-- [ ] **Commit** and put the hash in `validation_cases.yaml: locked_at_commit`.
-- [ ] **Slide 3 skeleton** from `hero_scenario.md`.
+- [ ] **Huddle (15 min, all three).** Agenda and hand-off contents ready in
+      **`docs/huddle.md`** so the 15 minutes is spent deciding rather than reading. Needs the three
+      people in a room.
+- [x] **Get keys.** `GEMINI_API_KEY` obtained and verified with a live `generateContent` call.
+      `OPENALEX_API_KEY` obtained and verified with live OpenAlex queries. Both live in a gitignored
+      `.env`; see `.env.example`. (The LLM provider moved Anthropic → DeepSeek → Gemini; see §6–7.)
+- [x] **Resolve subfields.** `data/resolve_subfields.py` run against `config/corpus.yaml`.
+      **All 21 subfield names resolved exactly** across 8 fields, 0 unresolved, no collisions against
+      `unique_subfield_assertion`. `config/corpus.lock.yaml` committed. Re-check with
+      `python3 data/resolve_subfields.py --check`.
+- [x] **Verify seed abstracts.** `data/verify_seeds.py` run. OpenAlex, then Europe PMC and arXiv per
+      `corpus.yaml source.fallbacks`. **5 of 6 cases survive; the gate minimum is 5, so it passes.**
+
+      | Case | Verified | Note |
+      |---|---|---|
+      | `jamming_gripper` | 3/4 | Trappe 2001 recovered from Europe PMC |
+      | `gecko_adhesive` | 3/3 | Autumn 2000 recovered from Europe PMC |
+      | `kidney_exchange` | 2/4 | exactly at threshold; Shapley and Gale need `manual_paste` |
+      | `physarum_network` | 2/3 | Tero 2007 recovered; OpenAlex alone left this at 1/3 |
+      | `simulated_annealing` | 3/3 | all verified |
+      | `ant_colony_routing` | 0/3 | **DROPPED** — no abstract in any of the three sources |
+
+      `ant_colony_routing` is dropped: Deneubourg 1990, Goss 1989 and Beckers 1992 carry no abstract in
+      OpenAlex, Europe PMC or arXiv. Recorded as a dated amendment. No `input_text`,
+      `acceptable_sources`, metric, baseline or reporting rule was altered. Six seeds remain
+      `manual_paste` but **none is gate-blocking**.
+
+      All 7 `excluded_outcome_papers` were confirmed present in OpenAlex **with full abstracts**. The
+      ingest job must apply `corpus.yaml exclude_titles_from` or the validation cases answer themselves.
+- [ ] **Input-language check.** Have A or B read each `input_text` cold and flag any word that gives
+      away the source field. Set `input_language_check.status`. **Cannot be done by me** — I wrote the
+      answers.
+- [x] **Commit** and the hash recorded in `validation_cases.yaml: locked_at_commit`
+      (`d561ca9`, the commit that locked the content; recorded in `17b0405`).
+- [x] **Slide 3.** Deck skeleton written in **`docs/deck.md`**, all five slides, slide 5 intentionally
+      empty until the Hour 14 numbers exist. Slide 3 carries a **real** capture from a live
+      `gemini-3.8-flash` abstractor run, marked provisional and leak-checked, to be regenerated from
+      the final prompt by Hour 6.
+- [x] **Mock data for A.** `frontend/src/mock/hero_run.json` (21 events) and
+      `dropped_candidate.json`, with `frontend/src/mock/README.md`. Every `source_passage` is verbatim
+      from a real paper's abstract, verified against OpenAlex and Europe PMC.
+
+**Still not done, and it is the real blocker:** the **abstraction batch job cannot run yet**.
+The corpus exists (3,000 papers) and the baseline index exists, but `abstractions_*` needs
+two things that are not written: Person B's gateway and `prompts/abstractor.md`. Until both
+exist there is no abstraction index, so `retrieve()` has nothing to search and the hero
+collision cannot land.
+
+The pipeline itself is built and verified:
+`data/resolve_subfields.py` → `data/ingest_corpus.py` → `data/abstract_corpus.py` →
+`data/build_index.py`, each resumable, with `requirements.txt` pinning the environment.
+
+**Two remaining items are cheap and should not be skipped:
+
+1. **`docs/field_qa.md`** — 20 random titles per field, read by hand. 160 reads catches a
+   wrong field tag before 3,000 papers are abstracted with it.
+   Regenerate with `python3 data/sample_field_qa.py`; seeded, so the sample is identical every
+   time and cannot be accused of being cherry-picked. **~40 minutes.**
+2. **The 600-paper pilot** before the full run. The LLM provider changed twice inside this
+   window, and abstraction quality is the entire thesis.
+
+## 8. Third amendment status: `prompts/abstractor.md` written and tested
+
+The abstractor prompt exists and has been **run live against `gemini-3.8-flash` and verified**,
+not merely drafted. `data/check_abstractor_prompt.py` asserts on the three cases that matter
+and currently passes 3/3:
+
+| Input | leak-free | `mechanism` |
+|---|---|---|
+| Hero (robotics → physics) | yes | `null`, as D14 requires |
+| `gecko_adhesive` (dev) | yes | `null`, as D14 requires |
+| A jamming seed **paper** | yes | present, as required for corpus papers |
+
+The hero input abstracts to *"Conform to an arbitrary boundary and immobilise what it encloses,
+without item-specific configuration and without continuous sensing."* — no robotics, no physics,
+and `mechanism` correctly null because the input states a problem and not an approach.
+
+This is what makes the few-shots load-bearing rather than decorative. The same model with a
+looser prompt returned `domain_tags: ['granular_jamming', ...]` for the same input, which places
+the answer in the query and makes retrieval self-fulfilling.
+
+**Two defects found by running it, both now fixed and both recorded for B:**
+
+1. Gemini cannot express `["string","null"]`, so a nullable field left in `required` is forced to
+   `STRING` and the model satisfies it with the literal text `"null"`. Truthy downstream, and
+   indexable as a real mechanism. Fixed by dropping nullable fields from `required` and
+   normalising `"null"`/`"none"`/`"n/a"`/`""` to `None`. Gateway rule 15.
+2. `data/verify_seeds.py` now rejects OpenAlex **citation stubs** as abstracts. Measured: Gale
+   1962's `abstract_inverted_index` holds
+   `"(2013). College Admissions and the Stability of Marriage. The American Mathematical
+   Monthly: Vol. 120, No. 5, pp. 386-391."` — bibliographic metadata. Unchecked it would have
+   been abstracted into the index as though it were prose.
+
+**Seed recovery outcome, stated plainly:** 3 of the 4 `manual_paste` seeds are **not
+recoverable** from any open source. Shapley 1974 and Nakagaki 2000 have no abstract in OpenAlex,
+Europe PMC or arXiv; Gale 1962's only OpenAlex "abstract" is the citation stub above; Liu 2010
+is `type=review` and is excluded by the corpus type filter. Recovering them needs a human with
+journal access. **None is gate-blocking** — every surviving case already clears 2 verified — so
+this is a nice-to-have, not a blocker.
+
+## 9. Third provider-shape finding
+
+The one remaining hard dependency is **Person B's gateway**. `prompts/abstractor.md` and
+`data/abstract_corpus.py` are both ready and `--dry-run` clean, but a live batch needs
+`backend/app/gateway.py` exposing `LLMGateway.run(task, inputs, cache_id=...)`. Until it exists,
+`data/corpus/abstractions.jsonl` cannot be written and the abstraction index cannot be built.
 
 ## 4. Pre-registration statement
 

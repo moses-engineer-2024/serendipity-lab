@@ -72,7 +72,7 @@ class LLMGateway:
 7. **Final failure raises `LLMFailure`.** The gateway never returns partial or unvalidated data. Callers decide what to do (the batch job writes to the retry file; the live run falls back).
 8. **Concurrency:** one global semaphore (`llm.concurrency`) across all tasks.
 9. **Structured output:** prefer the provider's tool-use / structured-output mechanism with the schema. Still validate afterward.
-10. **Provider isolation:** all Anthropic-specific code lives in one adapter class. Swapping provider means changing `models.yaml` and one file.
+10. **Provider isolation:** all provider-specific code lives in one adapter class. Swapping provider means changing `models.yaml` and one file. This has now been exercised for real: the provider went Anthropic -> DeepSeek -> Gemini inside the Hour 2 window, and `models.yaml` plus this one adapter class were the only things that changed. If a second file has to be touched to swap providers, that is a bug in this rule.
 11. **Counters:** log cache hits, misses, retries, and token usage per task. One summary line at the end of a batch.
 12. **Thinking budget 0 on every request.** Provider is Gemini (`config/models.yaml: llm.provider`), which
     thinks by default. Send `generationConfig.thinkingConfig.thinkingBudget = 0` on **every** request, read
@@ -91,11 +91,16 @@ class LLMGateway:
     - **Drop any union type.** Do not fake a nullable field as a required string. See rule 15.
     - Keep `propertyOrdering`. It makes the abstraction legible to a human auditor.
 15. **Nullable fields: omit from `required`, and trust the prompt — not the schema.** D14 makes `mechanism`
-    nullable for user input. If it is sent as a required `STRING`, the model **invents one** rather than
-    returning null (verified: given a gecko input it produced "Micro- and nanostructures..." for a problem
-    that proposes no approach). So for user-input calls leave `mechanism` out of `required`, and let the
-    prompt state that it may be null. Corpus papers keep `mechanism` required, and the batch job retries on
-    null, which is the existing rule.
+    nullable for user input. Gemini cannot express `["string","null"]` (rule 14), so a nullable field left
+    in `required` is forced to `STRING` and the model satisfies it with the **literal text `"null"`**.
+    Measured: with `mechanism` in `required`, the hero input came back with `"mechanism": "null"` — truthy
+    downstream, and indexable as though it were a real mechanism. So:
+    - For calls that allow null, **drop the field from `required`** and let the prompt state it may be null.
+    - After parsing, **normalise the literal strings** `"null"`, `"none"`, `"n/a"`, `""` to `None` before
+      validation. This is not paranoia: it is what the model actually returns.
+    - Corpus papers keep `mechanism` required, and the batch job retries on null, which is the existing rule.
+    - A reference implementation of this translation is `data/check_abstractor_prompt.py`; `translate()`
+      there is the exact mapping to copy.
 16. **Always validate after.** Post-validate every response against the **full, untranslated**
     `config/schemas/*.schema.json`. That is the only place `minLength`, `maxLength` and nullability are
     actually enforced, and it is what the cache stores.
@@ -135,7 +140,7 @@ def run_many(task: str, items: list[dict], *, id_key: str,
 
 ## Environment
 
-`ANTHROPIC_API_KEY`, `LLM_CACHE_ONLY` (optional), `LLM_DRY_RUN` (optional; returns fixtures from `tests/fixtures/{task}.json` so UI and API work needs no key).
+`GEMINI_API_KEY`, `LLM_CACHE_ONLY` (optional), `LLM_DRY_RUN` (optional; returns fixtures from `tests/fixtures/{task}.json` so UI and API work needs no key). See `.env.example`.
 
 ## Acceptance tests (Hour 6 gate)
 
