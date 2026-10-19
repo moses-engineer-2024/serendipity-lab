@@ -1,99 +1,206 @@
 from __future__ import annotations
 
+import json
 import math
+import os
+from pathlib import Path
 from typing import Any
+
+DEFAULT_MODEL_PATH = os.path.expanduser("~/.cache/serendipity-lab/bge-base-en-v1.5")
 
 
 class RetrievalService:
-    """Placeholder retrieval. A few hand-written entries with paraphrased abstracts.
+    """Real retrieval over the ChromaDB index using the local bge model.
 
-    It is NOT the real corpus: there is no index, no embeddings and no verbatim
-    abstracts. Every match it returns is tagged ``corpus="stub"`` so the trace and
-    the UI can say so instead of presenting the text as a quotation.
+    The corpus was indexed with BAAI/bge-base-en-v1.5 (768-dim, normalized, cosine).
+    Queries are embedded with the same model so they live in the same vector space.
+    The abstraction collections were never built (batch job not run), so we query
+    raw_abstracts: the query is structurally abstracted, the corpus side is raw.
+    Home-field exclusion is applied as a metadata filter before ranking.
     """
 
-    def __init__(self, corpus: list[dict[str, Any]] | None = None) -> None:
-        self.corpus = corpus or [
-            {
-                "id": "soft_matter_jamming_1",
-                "title": "Jamming at zero temperature and zero applied stress",
-                "source_field": "soft_matter_stat_physics",
-                "abstract": "A disordered assembly transitions from fluid-like to rigid under confinement and packing changes.",
-                "mechanism": "A phase transition in a dense granular medium changes the system from deformable to rigid.",
-                "functional_problem": "A mechanism that conforms to irregular shapes with minimal sensing.",
-                "constraints": ["minimal sensing", "reversible adaptation"],
-            },
-            {
-                "id": "bio_gecko_1",
-                "title": "Adhesive force of a single gecko foot-hair",
-                "source_field": "organismal_bio_ecology",
-                "abstract": "Strong reversible attachment emerges from microscopic contact geometry and compliance.",
-                "mechanism": "Micro-scale compliance and hierarchical contact produce reversible adhesion.",
-                "functional_problem": "Strong reversible attachment to arbitrary smooth surfaces without a bonding agent.",
-                "constraints": ["dry adhesion", "reusability"],
-            },
-            {
-                "id": "robotics_self_organizing",
-                "title": "Self-organizing grasping control",
-                "source_field": "robotics_mech_eng",
-                "abstract": "A robotic hand uses local adaptation to shape and hold irregular objects.",
-                "mechanism": "Local adaptation and compliance enable shape conforming contact.",
-                "functional_problem": "A mechanism that conforms to irregular shapes with minimal sensing.",
-                "constraints": ["minimal sensing", "shape uncertainty"],
-            },
-        ]
+    def __init__(
+        self,
+        chroma_path: str | Path | None = None,
+        corpus_path: str | Path | None = None,
+    ) -> None:
+        root = Path(__file__).resolve().parents[3]
+        self.chroma_path = Path(chroma_path) if chroma_path else (root / "data" / "chroma")
+        self.corpus_path = Path(corpus_path) if corpus_path else (root / "data" / "corpus" / "corpus.jsonl")
 
-    @staticmethod
-    def _text_similarity(left: str, right: str) -> float:
-        left_tokens = RetrievalService._tokenize(left)
-        right_tokens = RetrievalService._tokenize(right)
-        if not left_tokens or not right_tokens:
-            return 0.0
+        self._collection: Any = None
+        self._embedder: Any = None
+        self._paper_cache: dict[str, dict[str, Any]] = {}
+        self._load_corpus_cache()
 
-        left_set = set(left_tokens)
-        right_set = set(right_tokens)
-        overlap = len(left_set & right_set)
-        return overlap / max(len(left_set | right_set), 1)
+    def _load_corpus_cache(self) -> None:
+        if not self.corpus_path.exists():
+            return
+        with self.corpus_path.open("r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                paper = json.loads(line)
+                paper_id = str(paper.get("paper_id", ""))
+                if paper_id:
+                    self._paper_cache[paper_id] = paper
 
-    @staticmethod
-    def _tokenize(value: str) -> set[str]:
-        return {token.lower() for token in value.replace("-", " ").split() if token.strip()}
+    def _get_embedder(self) -> Any:
+        if self._embedder is not None:
+            return self._embedder
+        model_path = os.environ.get("SERENDIPITY_MODEL_PATH", DEFAULT_MODEL_PATH)
+        if not os.path.isdir(model_path):
+            return None
+        try:
+            from sentence_transformers import SentenceTransformer
 
-    def search(self, query: str, abstraction: dict[str, Any], *, home_fields: list[str] | None = None) -> list[dict[str, Any]]:
+            self._embedder = SentenceTransformer(model_path, device="cpu")
+        except Exception:
+            self._embedder = None
+        return self._embedder
+
+    def _get_collection(self) -> Any:
+        if self._collection is not None:
+            return self._collection
+        try:
+            import chromadb
+            from chromadb.config import Settings
+
+            client = chromadb.PersistentClient(
+                path=str(self.chroma_path),
+                settings=Settings(anonymized_telemetry=False),
+            )
+            collections = client.list_collections()
+            if not collections:
+                return None
+            self._collection = client.get_collection(name=collections[0].name)
+        except Exception:
+            self._collection = None
+        return self._collection
+
+    def search(
+        self,
+        query: str,
+        abstraction: dict[str, Any],
+        *,
+        home_fields: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
         home_field_set: set[str] = set(home_fields or [])
-        matches: list[dict[str, Any]] = []
+        collection = self._get_collection()
 
-        for paper in self.corpus:
-            source_field = str(paper.get("source_field", "unknown"))
+        if collection is None:
+            return self._fallback_search(query, abstraction, home_field_set)
+
+        embedder = self._get_embedder()
+        if embedder is None:
+            return self._fallback_search(query, abstraction, home_field_set)
+
+        try:
+            query_embedding = embedder.encode(query, normalize_embeddings=True).tolist()
+        except Exception:
+            return self._fallback_search(query, abstraction, home_field_set)
+
+        where_filter: dict[str, Any] | None = None
+        if home_field_set:
+            where_filter = {"field": {"$nin": list(home_field_set)}}
+
+        try:
+            results = collection.query(
+                query_embeddings=[query_embedding],
+                n_results=min(30, collection.count()),
+                where=where_filter,
+                include=["metadatas", "distances"],
+            )
+        except Exception:
+            return self._fallback_search(query, abstraction, home_field_set)
+
+        ids = results.get("ids", [[]])[0]
+        metadatas = results.get("metadatas", [[]])[0]
+        distances = results.get("distances", [[]])[0]
+
+        matches: list[dict[str, Any]] = []
+        for idx, (dist, meta) in enumerate(zip(distances, metadatas)):
+            paper_id = str(meta.get("paper_id", ids[idx] if idx < len(ids) else ""))
+            source_field = str(meta.get("field", "unknown"))
             if source_field in home_field_set:
                 continue
 
-            problem_score = self._text_similarity(query, str(paper.get("functional_problem", "")))
-            mechanism_score = self._text_similarity(str(abstraction.get("mechanism", "")), str(paper.get("mechanism", "")))
-            combined = max(problem_score, mechanism_score)
-            matched_on = "problem" if problem_score >= mechanism_score else "mechanism"
+            paper = self._paper_cache.get(paper_id, {})
+            abstract = str(paper.get("abstract", meta.get("title", "")))
+            similarity = 1.0 - float(dist)
 
             matches.append(
                 {
-                    "id": paper["id"],
-                    "title": paper["title"],
+                    "id": paper_id,
+                    "title": str(meta.get("title", paper.get("title", "Unknown"))),
                     "source_field": source_field,
-                    "structural_score": round(float(combined), 4),
-                    "matched_on": matched_on,
-                    "abstract": paper.get("abstract", ""),
-                    "year": paper.get("year"),
+                    "structural_score": round(similarity, 4),
+                    "matched_on": "problem",
+                    "abstract": abstract,
+                    "year": meta.get("year"),
                     "venue": paper.get("venue"),
-                    "doi": paper.get("doi"),
-                    "corpus": "stub" if paper.get("stub", True) else "index",
-                    "hypothesis": paper.get("abstract", ""),
-                    "source_passage": paper.get("abstract", ""),
-                    "mapping": [
-                        {"source_concept": "local compliance", "home_concept": "conformal contact"},
-                        {"source_concept": "phase transition", "home_concept": "switch from soft to rigid"},
-                    ],
-                    "reviewer_note": "The analogy is plausible when the system changes state under a single global control signal.",
+                    "doi": str(meta.get("doi", paper.get("doi", ""))),
+                    "corpus": "index",
+                    "hypothesis": abstract,
+                    "source_passage": abstract,
+                    "mapping": [],
+                    "reviewer_note": "",
                 }
             )
 
         matches.sort(key=lambda item: item["structural_score"], reverse=True)
-        return matches[:5]
+        return matches[:12]
+
+    def _fallback_search(
+        self,
+        query: str,
+        abstraction: dict[str, Any],
+        home_field_set: set[str],
+    ) -> list[dict[str, Any]]:
+        query_tokens = self._tokenize(query)
+        mechanism_tokens = self._tokenize(str(abstraction.get("mechanism", "")))
+
+        matches: list[dict[str, Any]] = []
+        for paper in self._paper_cache.values():
+            source_field = str(paper.get("field", "unknown"))
+            if source_field in home_field_set:
+                continue
+
+            abstract = str(paper.get("abstract", ""))
+            title = str(paper.get("title", ""))
+            abstract_tokens = self._tokenize(abstract + " " + title)
+
+            if not query_tokens or not abstract_tokens:
+                continue
+
+            overlap = len(query_tokens & abstract_tokens)
+            score = overlap / max(len(query_tokens | abstract_tokens), 1)
+            if score <= 0:
+                continue
+
+            matches.append(
+                {
+                    "id": str(paper.get("paper_id", "")),
+                    "title": title,
+                    "source_field": source_field,
+                    "structural_score": round(float(score), 4),
+                    "matched_on": "problem",
+                    "abstract": abstract,
+                    "year": paper.get("year"),
+                    "venue": paper.get("venue"),
+                    "doi": paper.get("doi"),
+                    "corpus": "index",
+                    "hypothesis": abstract,
+                    "source_passage": abstract,
+                    "mapping": [],
+                    "reviewer_note": "",
+                }
+            )
+
+        matches.sort(key=lambda item: item["structural_score"], reverse=True)
+        return matches[:12]
+
+    @staticmethod
+    def _tokenize(value: str) -> set[str]:
+        return {token.lower() for token in value.replace("-", " ").split() if token.strip()}
